@@ -1,30 +1,43 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
-
 import os
 import gdown
+from PIL import Image
 
-def download_model():
+@st.cache_resource
+def load_model():
     model_url = "https://drive.google.com/uc?id=1UP2dc_CaCEogKGw9aoq_vXTl7noIohQL"
     model_path = "trained_plant_model.keras"
     
     if not os.path.exists(model_path):
         with st.spinner("🔄 Downloading model..."):
-            gdown.download(model_url, model_path, quiet=False,fuzzy = True)
-
-
+            gdown.download(model_url, model_path, quiet=False, fuzzy=True)
+    
+    try:
+        model = tf.keras.models.load_model(model_path)
+        return model
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return None
 
 def model_predict(test_img):
-    download_model()
-    model = tf.keras.models.load_model("trained_plant_model.keras")
-    img = tf.keras.preprocessing.image.load_img(test_img,target_size = (128,128))
-    input_arr = tf.keras.preprocessing.image.img_to_array(img)
-    input_arr = np.array([input_arr])
-    prediction = model.predict([input_arr])
-    result_index = np.argmax(prediction)
-    return result_index
+    model = load_model()
+    if model is None:
+        return -1
+    
+    try:
+        img = Image.open(test_img)
+        img = img.resize((128, 128))
+        input_arr = tf.keras.preprocessing.image.img_to_array(img)
+        input_arr = np.array([input_arr])
+        prediction = model.predict(input_arr)
+        return np.argmax(prediction)
+    except Exception as e:
+        st.error(f"Prediction error: {e}")
+        return -1
 
+# Rest of your existing code...
 
 st.sidebar.title("🌿 Plant Disease System")
 
