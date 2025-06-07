@@ -168,6 +168,6 @@ elif app_mode == "🔬 Disease Recognition":
                     st.error("Unexpected prediction format.")
                     st.stop()
 
-                st.success(f"Model predicts: **{class_names[result_index]}** (Confidence: {confidence:.2f}%)")
+                st.success(f"Model predicts: **{class_names[result_index]}** ")
             else:
                 st.error("Prediction failed. Please try another image.")
