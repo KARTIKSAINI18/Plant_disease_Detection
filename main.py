@@ -1,61 +1,27 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
-from PIL import Image
-import gdown
+
 import os
+import gdown
 
-# Set page configuration
-st.set_page_config(page_title="Plant Disease Detection", layout="wide")
-
-# Load and cache the model
-@st.cache_resource
-def load_model():
-    model_url = "https://drive.google.com/uc?id=1UP2dc_CaCEogKGw9aoq_vXTl7noIohQ"  # Replace with your Google Drive ID
+def download_model():
+    model_url = "https://drive.google.com/uc?id=1UP2dc_CaCEogKGw9aoq_vXTl7noIohQL"
     model_path = "trained_plant_model.keras"
     
-    # Download model if not exists
     if not os.path.exists(model_path):
-        with st.spinner("🔄 Downloading TensorFlow model..."):
-            try:
-                gdown.download(model_url, model_path, quiet=False, fuzzy=True)
-            except Exception as e:
-                st.error(f"Error downloading model: {e}")
-                return None
-    
-    # Load TensorFlow model
-    try:
-        model = tf.keras.models.load_model(model_path)
-        return model
-    except Exception as e:
-        st.error(f"Error loading TensorFlow model: {e}")
-        return None
+        with st.spinner("🔄 Downloading model..."):
+            gdown.download(model_url, model_path, quiet=False, fuzzy=True)
 
-model = load_model()
-
-# Preprocess image
-def preprocess_image(image):
-    try:
-        img = Image.open(image).convert('RGB')  # Ensure RGB format
-        img = img.resize((224, 224))  # Match PlantVillage model input size
-        img_array = np.array(img, dtype=np.float32) / 255.0  # Normalize to [0, 1]
-        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
-        return img_array
-    except Exception as e:
-        st.error(f"Error preprocessing image: {e}")
-        return None
-
-# Predict disease
-def predict(image):
-    img_array = preprocess_image(image)
-    if img_array is None or model is None:
-        return None
-    try:
-        prediction = model.predict(img_array)
-        return prediction
-    except Exception as e:
-        st.error(f"Error during prediction: {e}")
-        return None
+def model_predict(test_img):
+    download_model()
+    model = tf.keras.models.load_model("trained_plant_model.keras")
+    img = tf.keras.preprocessing.image.load_img(test_img, target_size=(128, 128))
+    input_arr = tf.keras.preprocessing.image.img_to_array(img)
+    input_arr = np.array([input_arr])
+    prediction = model.predict([input_arr])
+    result_index = np.argmax(prediction)
+    return result_index
 
 # Class names from PlantVillage dataset
 class_names = [
