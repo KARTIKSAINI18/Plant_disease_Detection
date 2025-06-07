@@ -7,18 +7,22 @@ from PIL import Image
 
 @st.cache_resource
 def load_model():
-    model_url = "https://drive.google.com/uc?id=1UP2dc_CaCEogKGw9aoq_vXTl7noIohQL"
-    model_path = "trained_plant_model.keras"
+    # TFLite model URL (replace with your new Google Drive ID)
+    model_url = "https://drive.google.com/uc?id=1Dn42EtsP5zncci0K6aDohi2OTR11-9vK"
+    model_path = "plant_disease_model.tflite"
     
+    # Download model if not exists
     if not os.path.exists(model_path):
-        with st.spinner("🔄 Downloading model..."):
+        with st.spinner("🔄 Downloading TFLite model..."):
             gdown.download(model_url, model_path, quiet=False, fuzzy=True)
     
+    # Load TFLite model
     try:
-        model = tf.keras.models.load_model(model_path)
-        return model
+        interpreter = tf.lite.Interpreter(model_path=model_path)
+        interpreter.allocate_tensors()
+        return interpreter
     except Exception as e:
-        st.error(f"Error loading model: {e}")
+        st.error(f"Error loading TFLite model: {e}")
         return None
 
 
