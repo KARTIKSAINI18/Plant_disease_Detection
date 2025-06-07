@@ -26,32 +26,48 @@ def load_model():
         return None
 
 
-def model_predict(test_img):
-    # Download TFLite model from Drive
-    model_url = "https://drive.google.com/uc?id=YOUR_MODEL_ID"  # Replace YOUR_MODEL_ID
+@st.cache_resource  # Cache the model to avoid re-downloading
+def load_model():
+    model_url = "https://drive.google.com/uc?id=YOUR_MODEL_ID"  # Replace with your ID
     model_path = "plant_disease_model.tflite"
     
     if not os.path.exists(model_path):
-        gdown.download(model_url, model_path, quiet=False, fuzzy=True)
+        with st.spinner("🔄 Downloading model..."):
+            gdown.download(model_url, model_path, quiet=False, fuzzy=True)
     
-    # Load TFLite model
-    interpreter = tflite.Interpreter(model_path=model_path)
-    interpreter.allocate_tensors()
+    try:
+        interpreter = tflite.Interpreter(model_path=model_path)
+        interpreter.allocate_tensors()
+        return interpreter
+    except Exception as e:
+        st.error(f"Model loading failed: {str(e)}")
+        return None
+
+def model_predict(test_img):
+    # Load cached interpreter
+    interpreter = load_model()
+    if interpreter is None:
+        return -1  # Handle error
     
-    # Get input details
+    # Get model I/O details
     input_details = interpreter.get_input_details()
-    input_shape = input_details[0]['shape']
+    output_details = interpreter.get_output_details()
     
-    # Preprocess image (update dimensions if needed)
-    img = Image.open(test_img).resize((input_shape[1], input_shape[2]))
-    input_arr = np.array(img, dtype=np.float32) / 255.0  # Normalize
-    input_arr = np.expand_dims(input_arr, axis=0)  # Add batch dimension
-    
-    # Predict
-    interpreter.set_tensor(input_details[0]['index'], input_arr)
-    interpreter.invoke()
-    output = interpreter.get_tensor(interpreter.get_output_details()[0]['index'])
-    return np.argmax(output)
+    # Preprocess image
+    try:
+        img = Image.open(test_img).convert('RGB')  # Ensure RGB format
+        img = img.resize((input_details[0]['shape'][1], input_details[0]['shape'][2]))
+        input_arr = np.array(img, dtype=np.float32) / 255.0
+        input_arr = np.expand_dims(input_arr, axis=0)
+        
+        # Predict
+        interpreter.set_tensor(input_details[0]['index'], input_arr)
+        interpreter.invoke()
+        output = interpreter.get_tensor(output_details[0]['index'])
+        return np.argmax(output)
+    except Exception as e:
+        st.error(f"Prediction failed: {str(e)}")
+        return -1
 
 # Rest of your existing code...
 
