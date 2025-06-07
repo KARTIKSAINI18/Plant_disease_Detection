@@ -21,21 +21,33 @@ def load_model():
         st.error(f"Error loading model: {e}")
         return None
 
+
 def model_predict(test_img):
-    model = load_model()
-    if model is None:
-        return -1
+    # Download TFLite model from Drive
+    model_url = "https://drive.google.com/uc?id=YOUR_MODEL_ID"  # Replace YOUR_MODEL_ID
+    model_path = "plant_disease_model.tflite"
     
-    try:
-        img = Image.open(test_img)
-        img = img.resize((128, 128))
-        input_arr = tf.keras.preprocessing.image.img_to_array(img)
-        input_arr = np.array([input_arr])
-        prediction = model.predict(input_arr)
-        return np.argmax(prediction)
-    except Exception as e:
-        st.error(f"Prediction error: {e}")
-        return -1
+    if not os.path.exists(model_path):
+        gdown.download(model_url, model_path, quiet=False, fuzzy=True)
+    
+    # Load TFLite model
+    interpreter = tflite.Interpreter(model_path=model_path)
+    interpreter.allocate_tensors()
+    
+    # Get input details
+    input_details = interpreter.get_input_details()
+    input_shape = input_details[0]['shape']
+    
+    # Preprocess image (update dimensions if needed)
+    img = Image.open(test_img).resize((input_shape[1], input_shape[2]))
+    input_arr = np.array(img, dtype=np.float32) / 255.0  # Normalize
+    input_arr = np.expand_dims(input_arr, axis=0)  # Add batch dimension
+    
+    # Predict
+    interpreter.set_tensor(input_details[0]['index'], input_arr)
+    interpreter.invoke()
+    output = interpreter.get_tensor(interpreter.get_output_details()[0]['index'])
+    return np.argmax(output)
 
 # Rest of your existing code...
 
