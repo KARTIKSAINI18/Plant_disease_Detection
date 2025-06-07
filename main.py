@@ -1,5 +1,5 @@
 import streamlit as st
-import tensorflow as tf
+import tensorflow.lite as tflite
 import numpy as np
 import os
 import gdown
