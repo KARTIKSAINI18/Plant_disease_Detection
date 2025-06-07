@@ -11,7 +11,7 @@ def download_model():
     
     if not os.path.exists(model_path):
         with st.spinner("🔄 Downloading model..."):
-            gdown.download(model_url, model_path, quiet=False)
+            gdown.download(model_url, model_path, quiet=False,fuzzy = True)
 
 
 
