@@ -154,21 +154,21 @@ elif app_mode == "🔬 Disease Recognition":
             st.image(test_img, use_container_width=True)
         
         if st.button("Predict"):
-    st.write("Our Prediction")
-    prediction = model_predict(test_img)
+            st.write("Our Prediction")
+            prediction = model_predict(test_img)
 
-    if prediction is not None:
-        # Check shape before indexing
-        if prediction.ndim == 1:
-            result_index = np.argmax(prediction)
-            confidence = np.max(prediction) * 100
-        elif prediction.ndim == 2:
-            result_index = np.argmax(prediction[0])
-            confidence = np.max(prediction[0]) * 100
-        else:
-            st.error("Unexpected prediction format.")
-            st.stop()
+            if prediction is not None:
+                # Check shape before indexing
+                if prediction.ndim == 1:
+                    result_index = np.argmax(prediction)
+                    confidence = np.max(prediction) * 100
+                elif prediction.ndim == 2:
+                    result_index = np.argmax(prediction[0])
+                    confidence = np.max(prediction[0]) * 100
+                else:
+                    st.error("Unexpected prediction format.")
+                    st.stop()
 
-        st.success(f"Model predicts: **{class_names[result_index]}** (Confidence: {confidence:.2f}%)")
-    else:
-        st.error("Prediction failed. Please try another image.")
+                st.success(f"Model predicts: **{class_names[result_index]}** (Confidence: {confidence:.2f}%)")
+            else:
+                st.error("Prediction failed. Please try another image.")
