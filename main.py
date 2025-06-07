@@ -11,7 +11,7 @@ st.set_page_config(page_title="Plant Disease Detection", layout="wide")
 # Load and cache the model
 @st.cache_resource
 def load_model():
-    model_url = "https://drive.google.com/uc?id=1Dn42EtsP5zncci0K6aDohi2OTR11-9vK"  # Replace with your Google Drive ID
+    model_url = "https://drive.google.com/uc?id=1UP2dc_CaCEogKGw9aoq_vXTl7noIohQ"  # Replace with your Google Drive ID
     model_path = "trained_plant_model.keras"
     
     # Download model if not exists
