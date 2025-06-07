@@ -1,79 +1,82 @@
 import streamlit as st
-import tensorflow.lite as tflite
+import tensorflow as tf
 import numpy as np
-import os
-import gdown
 from PIL import Image
+import gdown
+import os
 
+# Set page configuration
+st.set_page_config(page_title="Plant Disease Detection", layout="wide")
+
+# Load and cache the model
 @st.cache_resource
 def load_model():
-    # TFLite model URL (replace with your new Google Drive ID)
-    model_url = "https://drive.google.com/uc?id=1Dn42EtsP5zncci0K6aDohi2OTR11-9vK"
-    model_path = "plant_disease_model.tflite"
+    model_url = "https://drive.google.com/uc?id=1Dn42EtsP5zncci0K6aDohi2OTR11-9vK"  # Replace with your Google Drive ID
+    model_path = "trained_plant_model.keras"
     
     # Download model if not exists
     if not os.path.exists(model_path):
-        with st.spinner("🔄 Downloading TFLite model..."):
-            gdown.download(model_url, model_path, quiet=False, fuzzy=True)
+        with st.spinner("🔄 Downloading TensorFlow model..."):
+            try:
+                gdown.download(model_url, model_path, quiet=False, fuzzy=True)
+            except Exception as e:
+                st.error(f"Error downloading model: {e}")
+                return None
     
-    # Load TFLite model
+    # Load TensorFlow model
     try:
-        interpreter = tf.lite.Interpreter(model_path=model_path)
-        interpreter.allocate_tensors()
-        return interpreter
+        model = tf.keras.models.load_model(model_path)
+        return model
     except Exception as e:
-        st.error(f"Error loading TFLite model: {e}")
+        st.error(f"Error loading TensorFlow model: {e}")
         return None
 
+model = load_model()
 
-@st.cache_resource  # Cache the model to avoid re-downloading
-def load_model():
-    model_url = "https://drive.google.com/uc?id=YOUR_MODEL_ID"  # Replace with your ID
-    model_path = "plant_disease_model.tflite"
-    
-    if not os.path.exists(model_path):
-        with st.spinner("🔄 Downloading model..."):
-            gdown.download(model_url, model_path, quiet=False, fuzzy=True)
-    
+# Preprocess image
+def preprocess_image(image):
     try:
-        interpreter = tflite.Interpreter(model_path=model_path)
-        interpreter.allocate_tensors()
-        return interpreter
+        img = Image.open(image).convert('RGB')  # Ensure RGB format
+        img = img.resize((224, 224))  # Match PlantVillage model input size
+        img_array = np.array(img, dtype=np.float32) / 255.0  # Normalize to [0, 1]
+        img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+        return img_array
     except Exception as e:
-        st.error(f"Model loading failed: {str(e)}")
+        st.error(f"Error preprocessing image: {e}")
         return None
 
-def model_predict(test_img):
-    # Load cached interpreter
-    interpreter = load_model()
-    if interpreter is None:
-        return -1  # Handle error
-    
-    # Get model I/O details
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-    
-    # Preprocess image
+# Predict disease
+def predict(image):
+    img_array = preprocess_image(image)
+    if img_array is None or model is None:
+        return None
     try:
-        img = Image.open(test_img).convert('RGB')  # Ensure RGB format
-        img = img.resize((input_details[0]['shape'][1], input_details[0]['shape'][2]))
-        input_arr = np.array(img, dtype=np.float32) / 255.0
-        input_arr = np.expand_dims(input_arr, axis=0)
-        
-        # Predict
-        interpreter.set_tensor(input_details[0]['index'], input_arr)
-        interpreter.invoke()
-        output = interpreter.get_tensor(output_details[0]['index'])
-        return np.argmax(output)
+        prediction = model.predict(img_array)
+        return prediction
     except Exception as e:
-        st.error(f"Prediction failed: {str(e)}")
-        return -1
+        st.error(f"Error during prediction: {e}")
+        return None
 
-# Rest of your existing code...
+# Class names from PlantVillage dataset
+class_names = [
+    'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
+    'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew',
+    'Cherry_(including_sour)___healthy', 'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot',
+    'Corn_(maize)___Common_rust_', 'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy',
+    'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)',
+    'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot',
+    'Peach___healthy', 'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy',
+    'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy',
+    'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew',
+    'Strawberry___Leaf_scorch', 'Strawberry___healthy', 'Tomato___Bacterial_spot',
+    'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold',
+    'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite',
+    'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
+    'Tomato___healthy'
+]
 
+# Sidebar
 st.sidebar.title("🌿 Plant Disease System")
-
-# Navigation Section
 st.sidebar.markdown("### Navigation")
 app_mode = st.sidebar.radio(
     "Go to",
@@ -82,8 +85,6 @@ app_mode = st.sidebar.radio(
 )
 
 st.sidebar.markdown("---")
-
-# Info Section
 st.sidebar.markdown("### Info")
 if app_mode == "🏠 Home":
     st.sidebar.info("Welcome! Upload plant images and detect diseases easily.")
@@ -93,14 +94,16 @@ elif app_mode == "🔬 Disease Recognition":
     st.sidebar.info("Upload leaf images and get disease predictions.")
 
 st.sidebar.markdown("---")
-
-# Footer
 st.sidebar.markdown("### Contact")
 st.sidebar.markdown("--")
+
+# Main content
 if app_mode == "🏠 Home":
     st.header("Plant Disease Recognition System")
-    img_pth = "plant_img.jpg"
-    st.image(img_pth,use_container_width=True)
+    try:
+        st.image("plant_img.jpg", use_container_width=True)
+    except Exception as e:
+        st.warning("Home page image not found. Please ensure 'plant_img.jpg' is in the repository.")
     st.markdown("""
 # 🌿 Plant Disease Recognition System
 
@@ -143,16 +146,15 @@ elif app_mode == "📖 About":
     st.markdown("""
 ### 📊 About the Dataset
 
-This dataset has been enhanced using offline data augmentation based on the original PlantVillage dataset, which is available on [GitHub](https://github.com/spMohanty/PlantVillage-Dataset) (or provide the real link if it's different).
+This dataset is based on the PlantVillage dataset, available on [GitHub](https://github.com/spMohanty/PlantVillage-Dataset), enhanced with offline data augmentation.
 
 It contains approximately **87,000 high-quality RGB images** of **healthy and diseased crop leaves**, spanning across **38 different classes**. The dataset is carefully organized to support deep learning model training and evaluation.
 
 The images are divided in an **80/20 split** for training and validation, while maintaining the original folder structure for each class.
 
-Additionally, a separate **test set of 33 images** has been created for prediction and evaluation purposes.
+Additionally, a separate **test set of 33 images** has been created for predictionierig
 
 ---
-
 ### 📁 Dataset Structure
 
 1. **Train** – 70,295 images  
@@ -165,27 +167,18 @@ Each image belongs to one of the 38 categories representing a specific crop and 
 """)
 elif app_mode == "🔬 Disease Recognition":
     st.header("Disease Recognition")
-    test_img = st.file_uploader("Select The Image : ")
-    if(st.button("Show Image")):
-        st.image(test_img,use_container_width=True)
+    test_img = st.file_uploader("Select an image:", type=["jpg", "jpeg", "png"])
     
-    if(st.button("Predict")):
-        st.write("Our Prediction")
-        result_index = model_predict(test_img)
+    if test_img is not None:
+        if st.button("Show Image"):
+            st.image(test_img, use_container_width=True)
         
-        class_name = ['Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
-                    'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 
-                    'Cherry_(including_sour)___healthy', 'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 
-                    'Corn_(maize)___Common_rust_', 'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy', 
-                    'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 
-                    'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot',
-                    'Peach___healthy', 'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy', 
-                    'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy', 
-                    'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew', 
-                    'Strawberry___Leaf_scorch', 'Strawberry___healthy', 'Tomato___Bacterial_spot', 
-                    'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold', 
-                    'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite', 
-                    'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
-                      'Tomato___healthy']
-        
-        st.success("Model Says it's a {}".format(class_name[result_index]))
+        if st.button("Predict"):
+            st.write("Our Prediction")
+            prediction = predict(test_img)
+            if prediction is not None:
+                result_index = np.argmax(prediction[0])
+                confidence = np.max(prediction[0]) * 100
+                st.success(f"Model predicts: **{class_names[result_index]}** (Confidence: {confidence:.2f}%)")
+            else:
+                st.error("Prediction failed. Please try another image.")
