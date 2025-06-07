@@ -27,8 +27,7 @@ def model_predict(test_img):
     prediction = model.predict(input_arr)
 
     # Logging shape for debugging
-    st.write("🔍 Raw prediction output:", prediction)
-    st.write("Prediction shape:", prediction.shape)
+    
 
     # Ensure valid prediction
     if prediction is not None and prediction.size > 0:
