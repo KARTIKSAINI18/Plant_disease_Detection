@@ -16,12 +16,26 @@ def download_model():
 def model_predict(test_img):
     download_model()
     model = tf.keras.models.load_model("trained_plant_model.keras")
+
+    # Load and preprocess image
     img = tf.keras.preprocessing.image.load_img(test_img, target_size=(128, 128))
     input_arr = tf.keras.preprocessing.image.img_to_array(img)
-    input_arr = np.array([input_arr])
-    prediction = model.predict([input_arr])
-    result_index = np.argmax(prediction)
-    return result_index
+    input_arr = input_arr / 255.0  # Normalize
+    input_arr = np.expand_dims(input_arr, axis=0)  # Add batch dimension
+
+    # Predict
+    prediction = model.predict(input_arr)
+
+    # Logging shape for debugging
+    st.write("🔍 Raw prediction output:", prediction)
+    st.write("Prediction shape:", prediction.shape)
+
+    # Ensure valid prediction
+    if prediction is not None and prediction.size > 0:
+        return prediction
+    else:
+        return None
+
 
 # Class names from PlantVillage dataset
 class_names = [
@@ -140,11 +154,21 @@ elif app_mode == "🔬 Disease Recognition":
             st.image(test_img, use_container_width=True)
         
         if st.button("Predict"):
-            st.write("Our Prediction")
-            prediction = model_predict(test_img)
-            if prediction is not None:
-                result_index = np.argmax(prediction[0])
-                confidence = np.max(prediction[0]) * 100
-                st.success(f"Model predicts: **{class_names[result_index]}** (Confidence: {confidence:.2f}%)")
-            else:
-                st.error("Prediction failed. Please try another image.")
+    st.write("Our Prediction")
+    prediction = model_predict(test_img)
+
+    if prediction is not None:
+        # Check shape before indexing
+        if prediction.ndim == 1:
+            result_index = np.argmax(prediction)
+            confidence = np.max(prediction) * 100
+        elif prediction.ndim == 2:
+            result_index = np.argmax(prediction[0])
+            confidence = np.max(prediction[0]) * 100
+        else:
+            st.error("Unexpected prediction format.")
+            st.stop()
+
+        st.success(f"Model predicts: **{class_names[result_index]}** (Confidence: {confidence:.2f}%)")
+    else:
+        st.error("Prediction failed. Please try another image.")
