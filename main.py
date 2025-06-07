@@ -141,7 +141,7 @@ elif app_mode == "🔬 Disease Recognition":
         
         if st.button("Predict"):
             st.write("Our Prediction")
-            prediction = predict(test_img)
+            prediction = model_predict(test_img)
             if prediction is not None:
                 result_index = np.argmax(prediction[0])
                 confidence = np.max(prediction[0]) * 100
