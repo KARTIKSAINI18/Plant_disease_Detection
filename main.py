@@ -20,7 +20,6 @@ def model_predict(test_img):
     # Load and preprocess image
     img = tf.keras.preprocessing.image.load_img(test_img, target_size=(128, 128))
     input_arr = tf.keras.preprocessing.image.img_to_array(img)
-    input_arr = input_arr / 255.0  # Normalize
     input_arr = np.expand_dims(input_arr, axis=0)  # Add batch dimension
 
     # Predict
