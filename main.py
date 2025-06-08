@@ -52,6 +52,62 @@ class_names = [
     'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
     'Tomato___healthy'
 ]
+treatment_dict = {
+    'Apple___Apple_scab': "Prune infected leaves, avoid overhead irrigation, and apply fungicides like captan or mancozeb.",
+    'Apple___Black_rot': "Remove and destroy infected fruits and twigs. Use fungicides like thiophanate-methyl.",
+    'Apple___Cedar_apple_rust': "Remove nearby cedar trees. Use resistant apple varieties and apply protective fungicides.",
+    'Apple___healthy': "Your apple plant is healthy. Keep monitoring regularly and maintain proper hygiene.",
+
+    'Blueberry___healthy': "Your blueberry plant is healthy. Ensure proper watering and soil pH management.",
+
+    'Cherry_(including_sour)___Powdery_mildew': "Improve air circulation, avoid overhead watering, and apply sulfur-based fungicides.",
+    'Cherry_(including_sour)___healthy': "Your cherry plant is healthy. Maintain good pruning practices and monitor regularly.",
+
+    'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot': "Rotate crops, use disease-resistant hybrids, and apply fungicides like azoxystrobin.",
+    'Corn_(maize)___Common_rust_': "Use resistant hybrids and apply fungicides like mancozeb if early symptoms appear.",
+    'Corn_(maize)___Northern_Leaf_Blight': "Practice crop rotation, use tolerant varieties, and apply fungicides when needed.",
+    'Corn_(maize)___healthy': "Corn is healthy. Continue crop monitoring and practice preventive crop management.",
+
+    'Grape___Black_rot': "Prune infected vines, remove fallen leaves, and apply fungicides like myclobutanil or captan.",
+    'Grape___Esca_(Black_Measles)': "Avoid over-fertilization, remove symptomatic shoots, and manage vine stress. No chemical cure available.",
+    'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)': "Remove infected leaves and apply copper-based or sulfur fungicides.",
+    'Grape___healthy': "Grape vines are healthy. Maintain good sanitation and prevent moisture retention on leaves.",
+
+    'Orange___Haunglongbing_(Citrus_greening)': "There is no cure. Remove and destroy infected trees. Control psyllid vectors with insecticides.",
+    
+    'Peach___Bacterial_spot': "Use resistant cultivars, avoid overhead watering, and apply copper-based bactericides.",
+    'Peach___healthy': "Peach tree is healthy. Regular pruning and proper irrigation will keep it disease-free.",
+
+    'Pepper,_bell___Bacterial_spot': "Use certified seeds, rotate crops, and apply copper-based sprays to manage spread.",
+    'Pepper,_bell___healthy': "Bell pepper plant is healthy. Monitor leaf condition and avoid excessive moisture.",
+
+    'Potato___Early_blight': "Use certified seed potatoes, rotate crops, and apply fungicides like chlorothalonil.",
+    'Potato___Late_blight': "Remove and destroy infected plants, use resistant varieties, and apply fungicides like metalaxyl.",
+    'Potato___healthy': "Your potato plant is healthy. Ensure proper drainage and monitor for any lesions or mold.",
+
+    'Raspberry___healthy': "Raspberry plant is healthy. Maintain spacing, prune regularly, and monitor for pests and diseases.",
+
+    'Soybean___healthy': "Soybean crop is healthy. Rotate crops annually and check regularly for early signs of pests or disease.",
+
+    'Squash___Powdery_mildew': "Use resistant varieties, increase airflow, and apply neem oil or sulfur sprays as needed.",
+
+    'Strawberry___Leaf_scorch': "Remove infected leaves and avoid overhead watering. Apply fungicides like captan.",
+    'Strawberry___healthy': "Strawberry plant is healthy. Maintain clean beds and use mulch to prevent fungal growth.",
+
+    'Tomato___Bacterial_spot': "Remove infected plants, apply copper sprays, and avoid working with wet plants.",
+    'Tomato___Early_blight': "Remove infected leaves, rotate crops, and spray fungicides like chlorothalonil or mancozeb.",
+    'Tomato___Late_blight': "Destroy infected plants, avoid overhead watering, and apply fungicides like copper sulfate.",
+    'Tomato___Leaf_Mold': "Increase ventilation, avoid leaf wetness, and apply fungicides like mancozeb.",
+    'Tomato___Septoria_leaf_spot': "Remove lower leaves, avoid overhead irrigation, and apply fungicides regularly.",
+    'Tomato___Spider_mites Two-spotted_spider_mite': "Spray with insecticidal soap or neem oil. Keep humidity high to deter mites.",
+    'Tomato___Target_Spot': "Apply fungicides and maintain proper spacing between plants for airflow.",
+    'Tomato___Tomato_Yellow_Leaf_Curl_Virus': "Remove infected plants, use resistant varieties, and control whiteflies with insecticides.",
+    'Tomato___Tomato_mosaic_virus': "Remove infected plants, disinfect tools, and use virus-free seeds.",
+    'Tomato___healthy': "Tomato plant is healthy. Keep monitoring regularly and water at the base of the plant."
+}
+
+
+
 
 # Sidebar
 st.sidebar.title("🌿 Plant Disease System")
@@ -168,5 +224,9 @@ elif app_mode == "🔬 Disease Recognition":
                     st.stop()
 
                 st.success(f"Model predicts: **{class_names[result_index]}** ")
+                disease_name = class_names[result_index]
+                treatment = treatment_dict.get(disease_name, "No treatment information available.")
+                st.info(f"💊 **Suggested Treatment:**\n{treatment}")
+
             else:
                 st.error("Prediction failed. Please try another image.")
